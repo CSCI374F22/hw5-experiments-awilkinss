@@ -4,12 +4,12 @@ import sklearn
 import pandas as pd
 import numpy as np
 
-# from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import confusion_matrix
 
 #reads in a dataset and returns the indexes of each non label column that has dtype object (string)
 def one_hot_columns(data):
@@ -38,11 +38,27 @@ def encode(data,cols):
     #this will be converted to numpy arrays in the step before training
     return data
 
+#gets possible labels by taking all the values in the label column and adding them to a set
+def get_possible_labels(data):
+    possible = []
+    all_of_them = list(data["label"])
+    scanna = set()
+
+    for label in all_of_them:
+        scanna.add(label)
+    
+    return list(scanna)
+
+#returns a list of fitted models, testing and training lists, and the possible labels for the hypothyroid data set
+
 def hypo_models(file,rand_int):
-#preprocessing
+    #preprocessing
     data = pd.read_csv(file)
     cols = one_hot_columns(data)
     data = encode(data,cols)
+
+    #get the possible labels
+    possible_labels = get_possible_labels(data)
 
     #training/testing split; x=attributes, y=labels
     x = data.drop("label",axis=1)
@@ -68,7 +84,9 @@ def hypo_models(file,rand_int):
     nb.fit(x_train,y_train)
 
     #do predictions, validation, accuracy checking, matrix, etc. later
-    return [[nn,dt,nb],[x_test,y_test]]
+    return [[nn,dt,nb],[x_test,y_test],possible_labels]
+
+#returns a list of fitted models, testing and training lists, and the possible labels for the mnist_1000 data set
 
 def mnist_models(file,rand_int):
     #preprocessing
@@ -78,6 +96,9 @@ def mnist_models(file,rand_int):
     x = data.drop("label",axis=1)
     y = data["label"]
 
+    #get the possible labels
+    possible_labels = get_possible_labels(data)
+
     x = x.to_numpy()
     y = y.to_numpy()
 
@@ -97,13 +118,17 @@ def mnist_models(file,rand_int):
     nb = GaussianNB() #maybe add args, idk if i care
     nb.fit(x_train,y_train)
 
-    return [[nn,dt,nb],[x_test,y_test]]
+    return [[nn,dt,nb],[x_test,y_test],possible_labels]
 
+#returns a list of fitted models, testing and training lists, and the possible labels for the monks data set
 def monks_models(file,rand_int):
     #preprocessing
     data = pd.read_csv(file)
     cols = one_hot_columns(data)
     data = encode(data,cols)
+
+    #get the possible labels
+    possible_labels = get_possible_labels(data)
 
     #training/testing split
     x = data.drop("label",axis=1)
@@ -127,7 +152,9 @@ def monks_models(file,rand_int):
     nb = GaussianNB() #maybe add args, idk if i care
     nb.fit(x_train,y_train)
 
-    return [[nn,dt,nb],[x_test,y_test]]
+    return [[nn,dt,nb],[x_test,y_test],possible_labels]
+
+#returns a list of fitted models, testing and training lists, and the possible labels for the votes data set
 
 def votes_models(file,rand_int):
 
@@ -136,6 +163,9 @@ def votes_models(file,rand_int):
     cols = one_hot_columns(data)
     data = encode(data,cols)
 
+    #get the possible labels
+    possible_labels = get_possible_labels(data)
+
     #training/testing split
     x = data.drop("label",axis=1)
     y = data["label"]
@@ -159,7 +189,73 @@ def votes_models(file,rand_int):
     nb = GaussianNB() #maybe add args, idk if i care
     nb.fit(x_train,y_train)
 
-    return [[nn,dt,nb],[x_test,y_test]]
+    return [[nn,dt,nb],[x_test,y_test],possible_labels]
+
+#takes the arguements and gives a cool lil file name
+def gen_file_name(model,file,rand_seed):
+    #results-<Approach>-<DataSet>_<Seed>.csv
+    if type(model) == sklearn.neural_network.MLPClassifier:
+        file_name = 'results-' + 'NeuralNetwork-' + file.replace('.csv','') + '-' + str(rand_seed)
+
+    elif type(model) == sklearn.tree.DecisionTreeClassifier:
+        file_name = 'results-' + 'DecisionTree-' + file.replace('.csv','') + '-' + str(rand_seed)
+    
+    else:
+        file_name = 'results-' + 'NaiveBayes-' + file.replace('.csv','') + '-' + str(rand_seed)
+    
+    return file_name
+
+#returns a string of the model name for pretty printing
+def gen_quality_of_life(model):
+    if type(model) == sklearn.neural_network.MLPClassifier:
+        model_name = 'Neural-Network'
+
+    elif type(model) == sklearn.tree.DecisionTreeClassifier:
+        model_name = 'Decision-Tree'
+    
+    else:
+        model_name = 'Naive-Bayes'
+    
+    return model_name
+
+#prints the matrix as a file using the aforementioned 'cool lil file name'
+def matrix_print(matrix,possible_labels,file_name):
+    header = []
+    for label in possible_labels:
+        header.append(label)
+
+    with open(str(file_name), 'w') as file:
+        writer = csv.writer(file, delimiter=",")
+        writer.writerow(list(header))
+
+        for i in range(len(matrix)):
+            row = np.append(matrix[i],(possible_labels[i]),axis=None)
+            writer.writerow(row)
+    file.close
+
+#returns accuracy and confusion matrix in a list
+def validate(predictions,actual,possible_labels):
+    accuracy = 0
+    correct = 0
+    length = len(actual)
+
+    #if the prediction was right, increment count by 1
+    for i in range(length):
+        if predictions[i] == actual[i]:
+            correct += 1
+
+    #get accuracy by finding percent it got correct
+    accuracy = correct / length
+
+    #generate confusion matrix
+
+    # print("predictions:",predictions)
+    # print("actual(labels",actual)
+    # print("possible labels:",possible_labels)
+
+    matrix = confusion_matrix(actual,predictions,labels=possible_labels)
+
+    return [matrix,accuracy]
 
 def test():
     data = pd.read_csv('hypothyroid.csv')
@@ -179,19 +275,82 @@ def main():
 
         #testing lists are x_test and y_test
 
-        #models are not, in any way, optimized
+        #models are not, in any way, shape, or form, optimized
         if file == 'hypothyroid.csv':
-            model_list, testing_lists = hypo_models(file,rand_int)
+            model_list, testing_lists, labels = hypo_models(file,rand_int)
+
+            #once each model is fit, generate predictions, get accuracy, etc. for each model
+
+            print("=== Hypothyroid Data Set ===")
+            for model in model_list:
+                #gets the name for the to be generated file
+                file_name = gen_file_name(model,file,rand_int)
+
+                #generates predictions
+                predictions = model.predict(testing_lists[0])
+
+                #gets the conf. matrix and the accuracy of each model
+                matrix, accuracy = validate(predictions,testing_lists[1],labels)
+
+                #print accuracy (on command line) then matrix (as file)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy)
+                matrix_print(matrix,labels,file_name)
+
 
         if file == 'mnist_1000.csv':
-            model_list, testing_lists = mnist_models(file,rand_int)
+            model_list, testing_lists, labels = mnist_models(file,rand_int)
+
+            print("=== mnist_1000 Data Set ===")
+            for model in model_list:
+                #gets the name for the to be generated file
+                file_name = gen_file_name(model,file,rand_int)
+
+                #generates predictions
+                predictions = model.predict(testing_lists[0])
+
+                #gets the conf. matrix and the accuracy of each model
+                matrix, accuracy = validate(predictions,testing_lists[1],labels)
+
+                #print accuracy (on command line) then matrix (as file)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy)
+                matrix_print(matrix,labels,file_name)
             
 
         if file == 'monks1.csv':
-            model_list, testing_lists = monks_models(file,rand_int)
+            model_list, testing_lists, labels = monks_models(file,rand_int)
+
+            print("=== Monks Data Set ===")
+            for model in model_list:
+                #gets the name for the to be generated file
+                file_name = gen_file_name(model,file,rand_int)
+
+                #generates predictions
+                predictions = model.predict(testing_lists[0])
+
+                #gets the conf. matrix and the accuracy of each model
+                matrix, accuracy = validate(predictions,testing_lists[1],labels)
+
+                #print accuracy (on command line) then matrix (as file)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy)
+                matrix_print(matrix,labels,file_name)
         
         if file == 'votes.csv':
-            model_list, testing_lists = votes_models(file,rand_int)
+            model_list, testing_lists, labels = votes_models(file,rand_int)
+
+            print("=== Votes Data Set ===")
+            for model in model_list:
+                #gets the name for the to be generated file
+                file_name = gen_file_name(model,file,rand_int)
+
+                #generates predictions
+                predictions = model.predict(testing_lists[0])
+
+                #gets the conf. matrix and the accuracy of each model
+                matrix, accuracy = validate(predictions,testing_lists[1],labels)
+
+                #print accuracy (on command line) then matrix (as file)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy)
+                matrix_print(matrix,labels,file_name)
 
     # test()
 
