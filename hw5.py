@@ -3,6 +3,7 @@ import csv
 import sklearn
 import pandas as pd
 import numpy as np
+import math
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
@@ -267,6 +268,30 @@ def test():
 
 file_names = ['hypothyroid.csv','mnist_1000.csv','monks1.csv','votes.csv']
 
+def confidence_interval(matrix):
+    #Get n and p_hat values from matrix
+    n = 0
+    p_hat = 0
+    for i in range(len(matrix)):
+        for j in range(len(matrix)):
+            #Count total number of values in tested
+            n += matrix[i][j]
+
+            #Count number of correct predictions
+            if i == j:
+                p_hat += matrix[i][j]
+    
+    #Get all values needed to calculate CI
+    p_hat = p_hat / n
+    s = math.sqrt(p_hat * (1 - p_hat))
+    SE = s / math.sqrt(n)
+    z = 2.24
+
+    #Calculate CI
+    lower_bound = round(p_hat - z * SE, 4)
+    upper_bound = round(p_hat + z * SE, 4)
+    return tuple([lower_bound, upper_bound])
+
 def main():
     rand_int = int(sys.argv[1])
 
@@ -293,7 +318,8 @@ def main():
                 matrix, accuracy = validate(predictions,testing_lists[1],labels)
 
                 #print accuracy (on command line) then matrix (as file)
-                print("Accuracy for",gen_quality_of_life(model),':', accuracy)
+                CI = confidence_interval(matrix)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
                 matrix_print(matrix,labels,file_name)
 
 
@@ -312,7 +338,8 @@ def main():
                 matrix, accuracy = validate(predictions,testing_lists[1],labels)
 
                 #print accuracy (on command line) then matrix (as file)
-                print("Accuracy for",gen_quality_of_life(model),':', accuracy)
+                CI = confidence_interval(matrix)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
                 matrix_print(matrix,labels,file_name)
             
 
@@ -331,7 +358,8 @@ def main():
                 matrix, accuracy = validate(predictions,testing_lists[1],labels)
 
                 #print accuracy (on command line) then matrix (as file)
-                print("Accuracy for",gen_quality_of_life(model),':', accuracy)
+                CI = confidence_interval(matrix)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
                 matrix_print(matrix,labels,file_name)
         
         if file == 'votes.csv':
@@ -349,7 +377,8 @@ def main():
                 matrix, accuracy = validate(predictions,testing_lists[1],labels)
 
                 #print accuracy (on command line) then matrix (as file)
-                print("Accuracy for",gen_quality_of_life(model),':', accuracy)
+                CI = confidence_interval(matrix)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
                 matrix_print(matrix,labels,file_name)
 
     # test()
