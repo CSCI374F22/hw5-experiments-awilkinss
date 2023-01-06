@@ -295,13 +295,13 @@ def recall(matrix, labels):
     #Calculate revall vals
     recall_vals = []
     for i in range(len(matrix)):
-        num_label_predicted = 0
+        num_total_label = 0
         num_correct = 0
         for j in range(len(matrix)):
-            num_label_predicted += matrix[i][j]
+            num_total_label += matrix[j][i]
             if i == j:
                 num_correct += matrix[i][j]
-        recall_vals.append(str(num_correct) + '/' + str(num_label_predicted))
+        recall_vals.append(str(num_correct) + '/' + str(num_total_label))
     
     #Match values with the label.
     recall_vals_with_labels = {}
