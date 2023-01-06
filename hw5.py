@@ -266,8 +266,6 @@ def test():
     # print("result:")
     # print(result)
 
-file_names = ['hypothyroid.csv','mnist_1000.csv','monks1.csv','votes.csv']
-
 def confidence_interval(matrix):
     #Get n and p_hat values from matrix
     n = 0
@@ -291,6 +289,8 @@ def confidence_interval(matrix):
     lower_bound = round(p_hat - z * SE, 4)
     upper_bound = round(p_hat + z * SE, 4)
     return tuple([lower_bound, upper_bound])
+
+file_names = ['hypothyroid.csv','mnist_1000.csv','monks1.csv','votes.csv']
 
 def main():
     rand_int = int(sys.argv[1])
@@ -383,7 +383,131 @@ def main():
 
     # test()
 
-main()
+# main()
+
+def run(rand_int):
+    hypo_accuracies = [[],[],[]]
+    mnist_accuracies = [[],[],[]]
+    monks_accuracies = [[],[],[]]
+    votes_accuracies = [[],[],[]]
+
+    for file in file_names:
+        #model lists= nn(neural network), dt(decision tree), and nb(naive bayes)
+
+        #testing lists are x_test and y_test
+
+        #models are not, in any way, shape, or form, optimized
+        if file == 'hypothyroid.csv':
+            model_list, testing_lists, labels = hypo_models(file,rand_int)
+
+            #once each model is fit, generate predictions, get accuracy, etc. for each model
+
+            print("=== Hypothyroid Data Set ===")
+            for model in model_list:
+                #gets the name for the to be generated file
+                file_name = gen_file_name(model,file,rand_int)
+
+                #generates predictions
+                predictions = model.predict(testing_lists[0])
+
+                #gets the conf. matrix and the accuracy of each model
+                matrix, accuracy = validate(predictions,testing_lists[1],labels)
+
+                #print accuracy (on command line) then matrix (as file)
+                CI = confidence_interval(matrix)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
+                # matrix_print(matrix,labels,file_name)
+
+                if type(model) == sklearn.neural_network.MLPClassifier:
+                    hypo_accuracies[0].append(accuracy)
+                elif type(model) == sklearn.tree.DecisionTreeClassifier:
+                    hypo_accuracies[1].append(accuracy)
+                else:
+                    hypo_accuracies[2].append(accuracy)
+
+        if file == 'mnist_1000.csv':
+            model_list, testing_lists, labels = mnist_models(file,rand_int)
+
+            print("=== mnist_1000 Data Set ===")
+            for model in model_list:
+                #gets the name for the to be generated file
+                file_name = gen_file_name(model,file,rand_int)
+
+                #generates predictions
+                predictions = model.predict(testing_lists[0])
+
+                #gets the conf. matrix and the accuracy of each model
+                matrix, accuracy = validate(predictions,testing_lists[1],labels)
+
+                #print accuracy (on command line) then matrix (as file)
+                CI = confidence_interval(matrix)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
+                # matrix_print(matrix,labels,file_name)
+
+                if type(model) == sklearn.neural_network.MLPClassifier:
+                    mnist_accuracies[0].append(accuracy)
+                elif type(model) == sklearn.tree.DecisionTreeClassifier:
+                    mnist_accuracies[1].append(accuracy)
+                else:
+                    mnist_accuracies[2].append(accuracy)
+         
+            
+
+        if file == 'monks1.csv':
+            model_list, testing_lists, labels = monks_models(file,rand_int)
+
+            print("=== Monks Data Set ===")
+            for model in model_list:
+                #gets the name for the to be generated file
+                file_name = gen_file_name(model,file,rand_int)
+
+                #generates predictions
+                predictions = model.predict(testing_lists[0])
+
+                #gets the conf. matrix and the accuracy of each model
+                matrix, accuracy = validate(predictions,testing_lists[1],labels)
+
+                #print accuracy (on command line) then matrix (as file)
+                CI = confidence_interval(matrix)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
+                # matrix_print(matrix,labels,file_name)
+                if type(model) == sklearn.neural_network.MLPClassifier:
+                    monks_accuracies[0].append(accuracy)
+                elif type(model) == sklearn.tree.DecisionTreeClassifier:
+                    monks_accuracies[1].append(accuracy)
+                else:
+                    monks_accuracies[2].append(accuracy)
+        
+        if file == 'votes.csv':
+            model_list, testing_lists, labels = votes_models(file,rand_int)
+
+            print("=== Votes Data Set ===")
+            for model in model_list:
+                #gets the name for the to be generated file
+                file_name = gen_file_name(model,file,rand_int)
+
+                #generates predictions
+                predictions = model.predict(testing_lists[0])
+
+                #gets the conf. matrix and the accuracy of each model
+                matrix, accuracy = validate(predictions,testing_lists[1],labels)
+
+                #print accuracy (on command line) then matrix (as file)
+                CI = confidence_interval(matrix)
+                print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
+                # matrix_print(matrix,labels,file_name)
+
+                if type(model) == sklearn.neural_network.MLPClassifier:
+                    votes_accuracies[0].append(accuracy)
+                elif type(model) == sklearn.tree.DecisionTreeClassifier:
+                    votes_accuracies[1].append(accuracy)
+                else:
+                    votes_accuracies[2].append(accuracy)  
+
+    for lst in [hypo_accuracies,mnist_accuracies,monks_accuracies,votes_accuracies]:
+        print(lst)
+
+    return [hypo_accuracies,mnist_accuracies,monks_accuracies,votes_accuracies]
 
 #Goal Flow:
 
