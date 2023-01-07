@@ -290,6 +290,28 @@ def confidence_interval(matrix):
     upper_bound = round(p_hat + z * SE, 4)
     return tuple([lower_bound, upper_bound])
 
+#Get recall values for a confusion matrix
+def recall(matrix, labels):
+    #Calculate revall vals
+    recall_vals = []
+    for i in range(len(matrix)):
+        num_total_label = 0
+        num_correct = 0
+        for j in range(len(matrix)):
+            num_total_label += matrix[j][i]
+            if i == j:
+                num_correct += matrix[i][j]
+        recall_vals.append(str(num_correct) + '/' + str(num_total_label))
+    
+    #Match values with the label.
+    recall_vals_with_labels = {}
+    for i in range(len(labels)):
+        recall_vals_with_labels[labels[i]] = recall_vals[i]
+    
+    return recall_vals_with_labels
+    
+
+
 file_names = ['hypothyroid.csv','mnist_1000.csv','monks1.csv','votes.csv']
 
 def main():
@@ -320,6 +342,8 @@ def main():
                 #print accuracy (on command line) then matrix (as file)
                 CI = confidence_interval(matrix)
                 print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
+                recall_vals = recall(matrix, labels)
+                print(recall_vals)
                 matrix_print(matrix,labels,file_name)
 
 
@@ -340,6 +364,8 @@ def main():
                 #print accuracy (on command line) then matrix (as file)
                 CI = confidence_interval(matrix)
                 print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
+                recall_vals = recall(matrix, labels)
+                print(recall_vals)
                 matrix_print(matrix,labels,file_name)
             
 
@@ -360,6 +386,8 @@ def main():
                 #print accuracy (on command line) then matrix (as file)
                 CI = confidence_interval(matrix)
                 print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
+                recall_vals = recall(matrix, labels)
+                print(recall_vals)
                 matrix_print(matrix,labels,file_name)
         
         if file == 'votes.csv':
@@ -379,11 +407,13 @@ def main():
                 #print accuracy (on command line) then matrix (as file)
                 CI = confidence_interval(matrix)
                 print("Accuracy for",gen_quality_of_life(model),':', accuracy, ", CI: ", CI)
+                recall_vals = recall(matrix, labels)
+                print(recall_vals)
                 matrix_print(matrix,labels,file_name)
 
     # test()
 
-# main()
+main()
 
 def run(rand_int):
     hypo_accuracies = [[],[],[]]
